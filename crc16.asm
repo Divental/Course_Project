@@ -21,7 +21,8 @@
     final_message DB 10, 13, 10, "The program has ended correctly! $"
     
     auxiliary_string DB 10, 13, 10, 'Wrong character! Please try again!', 13, 10, '$'    
-    
+ 
+   
 .CODE
 
 main PROC 
@@ -42,6 +43,8 @@ main PROC
 
     lea di, message
 
+
+; This code reads characters from the keyboard one by one into the message buffer until the Enter key (code 13) is pressed, after which it terminates the input.
 read_loop:  
 
     mov ah, 1 
@@ -58,12 +61,16 @@ read_loop:
     
     jmp read_loop
 
+
+; This code places a zero (0) byte at the end of the entered string (to mark the end of the text) and loads the start address of the message string into the SI register for further processing.
 input_done:  
 
     mov byte ptr [di], 0    
 
     lea si, message
 
+
+; Reads one character at a time from the line, checks the end, and starts processing for CRC16.
 next_byte: 
 
     lodsb  
@@ -77,7 +84,9 @@ next_byte:
     mov crc_l, al
 
     mov cx, 8
-
+ 
+ 
+; Shifts the CRC one bit to the right and, if the shift causes a carry (overflow), proceeds to the XOR operation with the polynomial to update the CRC.
 bit_loop:   
 
     mov ax, 0  
@@ -92,10 +101,14 @@ bit_loop:
      
     jmp store_crc
 
+
+; Performs XOR between register AX (current CRC) and the specified polynomial 0A001h if there was a carry during the shift.
 xor_polynomial:
 
     xor ax, polynomial
 
+
+; Stores the updated CRC value in crc_l and crc_h, repeats the cycle for the next bit, and after 8 bits moves on to processing the next character.
 store_crc:
 
     mov crc_l, al
@@ -106,6 +119,8 @@ store_crc:
     
     jmp next_byte
 
+
+; Displays the message CRC16 =, then sequentially displays the most significant (crc_h) and least significant (crc_l) bytes of the calculated CRC in hexadecimal format, after which it proceeds to select an action (continue or exit).
 done:
 
     mov dx, OFFSET exit_notification                    
@@ -125,7 +140,8 @@ done:
     call next
 
 
-print_hex_byte:  
+; The print_hex_byte procedure displays the contents of the AL register in hexadecimal format (2 characters) on the screen.
+print_hex_byte PROC  
 
     push ax 
     
@@ -147,15 +163,20 @@ print_hex_byte:
     
     pop ax 
     
-    ret
+    ret 
 
-print_hex_digit: 
+print_hex_byte ENDP
+
+
+; The print_hex_digit procedure displays a single hexadecimal character (0–9, A–F) passed in the AL register on the screen.
+print_hex_digit PROC 
 
     cmp al, 9 
     
     jbe outer_print_num 
     
     add al, 7  
+
           
 outer_print_num:  
 
@@ -167,8 +188,12 @@ outer_print_num:
     
     int 21h 
     
-    ret
-    
+    ret 
+
+print_hex_digit ENDP
+
+
+; Processes user input for repeat or exit, clears the screen, displays a message, and proceeds according to the selection (C - repeat, E - exit, other error).    
 next PROC 
     
     call clear_away
@@ -192,14 +217,16 @@ next PROC
     jz EnteredE  
     
     jnz ErrorPressF
+
                              
-           
+; If the user enters ‘C’, clears the input buffer and restarts the program from the beginning.           
 EnteredC:
 
     call clear_away
 
     jmp main
-                                                       
+
+; If the user enters ‘E’, displays a farewell message and terminates the program via interrupt int 21h with function 4Ch.                                                       
 EnteredE:
                    
     mov dx, OFFSET final_message
@@ -212,6 +239,8 @@ EnteredE:
                     
     int 21h 
 
+
+; If an incorrect character is entered, displays an error message and restarts the action selection via next.
 ErrorPressF:
 
     mov dx,OFFSET auxiliary_string          
@@ -224,12 +253,16 @@ ErrorPressF:
 
 next ENDP
 
+
+; Clears the message array of 10 bytes, writing a zero (0) to each one.
 clear_away PROC
 
     mov cx, 10         
     
     lea di, message   
 
+
+; Cyclically writes zero (0) to each byte of the message buffer, clearing it completely.
 clear_loop:      
     
     mov byte ptr [di], 0  
@@ -241,5 +274,7 @@ clear_loop:
     ret
 
 clear_away ENDP        
+
+
 
 END main
