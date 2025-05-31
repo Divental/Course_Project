@@ -1,5 +1,3 @@
-include 'emu8086.inc'
-
 .MODEL small
 
 .STACK 4096
@@ -8,25 +6,21 @@ include 'emu8086.inc'
 
     message DB 10 DUP(0)   
     
-    ;message DB "A", 0
-    
     crc_l DB 0FFh 
     
     crc_h DB 0FFh  
     
     polynomial DW 0A001h 
     
-    exit_notification DB 13, 10, 'CRC16 = $' 
+    exit_notification DB 10, 13, 10, 'CRC16 = $' 
     
-    message_2 DB 13, 10, "Enter your text to calculate CRC16: $"  
+    message_2 DB 10, 13, 10, "Enter your text to calculate CRC16: $"  
     
-    final_message DB 13, 10, 10, "The program has ended correctly $", 13, 10 
-   
-    message_3 DB 13, 10, "Continue -> R, exit -> E: $"   
+    message_3 DB 10, 13, 10, "{ Continue -> C (Upper case) }---/\---{ Exit -> E (Upper case) }: $"  
     
-    Auxiliary_String DB 13, 10, 'Wrong character! Please try again!', 13, 10, '$' 
+    final_message DB 10, 13, 10, "The program has ended correctly! $"
     
-    
+    auxiliary_string DB 10, 13, 10, 'Wrong character! Please try again!', 13, 10, '$'    
     
 .CODE
 
@@ -45,14 +39,6 @@ main PROC
     mov ah,09h                                 
     
     int 21h 
-    
-    ;lea SI, message_2
-    
-    ;call print_string 
-    
-    ;CALL   pthis 
-    
-    ;DB  017, 009, 'Enter your text to calculate CRC16 and press ‘Enter’ after the last character: ', 0
 
     lea di, message
 
@@ -207,15 +193,13 @@ next PROC
     
     jnz ErrorPressF
                              
-     
-        
+           
 EnteredC:
 
     call clear_away
 
     jmp main
-    
-                                                     
+                                                       
 EnteredE:
                    
     mov dx, OFFSET final_message
@@ -230,7 +214,7 @@ EnteredE:
 
 ErrorPressF:
 
-    mov dx,OFFSET Auxiliary_String          
+    mov dx,OFFSET auxiliary_string          
 
     mov ah,09h                                 
 
@@ -256,16 +240,6 @@ clear_loop:
     
     ret
 
-clear_away ENDP
-
-DEFINE_SCAN_NUM  
-
-DEFINE_PRINT_STRING 
-                   
-DEFINE_PRINT_NUM 
-
-DEFINE_PRINT_NUM_UNS 
- 
-DEFINE_PTHIS
+clear_away ENDP        
 
 END main
