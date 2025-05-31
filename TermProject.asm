@@ -1,54 +1,97 @@
+include 'emu8086.inc'
 
-.MODEL small 
+.MODEL small
 
-.STACK 100h
+.STACK 4096
 
 .DATA
-    msg DB 'B', 0
-    crc_l DB 0FFh
-    crc_h DB 0FFh
-    poly DW 0A001h
+
+    message DB 'A', 0  
+    
+    crc_l DB 0FFh 
+    
+    crc_h DB 0FFh  
+    
+    polynomial DW 0A001h  
+    
 .CODE
 
-main PROC
-    mov ax, @data
+main PROC   
+    
+    mov ax, @data 
+    
     mov ds, ax
 
-    lea si, msg
+    lea si, message
 
-next_byte:
-    lodsb
-    cmp al, 0
-    je done
+next_byte: 
 
-    xor al, crc_l
+    lodsb  
+    
+    cmp al, 0 
+    
+    je empty_done
+
+    xor al, crc_l  
+    
     mov crc_l, al
 
     mov cx, 8
 
-bit_loop:
-    mov ax, 0         ; ????????? AX
-    mov al, crc_l
-    mov ah, crc_h
-    shr ax, 1         ; ???????? ???? ?????? ?? 1 ???
+bit_loop:   
 
-    jc xor_poly       ; ???? ??? ???????, XOR ?? ???????
+    mov ax, 0  
+         
+    mov al, crc_l  
+    
+    mov ah, crc_h  
+    
+    shr ax, 1        
+
+    jc xor_polynomial   
+     
     jmp store_crc
 
-xor_poly:
-    xor ax, poly
+xor_polynomial:
+
+    xor ax, polynomial
 
 store_crc:
+
     mov crc_l, al
+    
     mov crc_h, ah
 
-    loop bit_loop
+    loop bit_loop 
+    
     jmp next_byte
 
 done:
-    ; ??? ? crc_h:crc_l ????????? CRC
-    ; ????? ??? ???????, ???? ????????
-    mov ah, 4Ch
+    
+    mov al, crc_l
+    
+    mov ah, crc_h
+    
+    call print_num
+    
+    ret 
+
+    mov ah, 04Ch 
+    
     int 21h
+    
+empty_done:
+
+    mov ah, 04Ch 
+    
+    int 21h
+    
 main ENDP
+
+DEFINE_SCAN_NUM
+DEFINE_PRINT_STRING
+DEFINE_PRINT_NUM
+DEFINE_PRINT_NUM_UNS  ; required for print_num.
+DEFINE_PTHIS
+
 END main
