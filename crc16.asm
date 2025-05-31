@@ -16,7 +16,13 @@ include 'emu8086.inc'
     
     exit_notification   DW 13, 'CRC16 =  $' 
     
-    message_2 DB 13, 10, 'Enter your text to calculate CRC16: $'   
+    message_2 DB 13, 10, "Enter your text to calculate CRC16: $"  
+    
+    final_message DB 13, 10, 10, "The program has ended correctly $", 13, 10 
+   
+    message_3 DB 13, 10, 10, "Continue -> R, exit -> E: $"   
+    
+    Auxiliary_String DB 13, 10, 'Wrong character! Please try again!', 13, 10, '$' 
     
     
     
@@ -122,11 +128,10 @@ done:
 
     mov al, crc_l 
     
-    call print_hex_byte
-
-    mov ah, 4Ch 
+    call print_hex_byte 
     
-    int 21h
+    call next
+
 
 print_hex_byte:  
 
@@ -172,7 +177,58 @@ outer_print_num:
     
     ret
     
-main ENDP    
+next PROC 
+
+    mov dx,OFFSET message_3         
+    
+    mov ah,09h                                 
+    
+    int 21h                
+    
+    mov ah,01h                                  
+    
+    int 21h
+
+    cmp al,'C'
+    
+    jz EnteredC
+    
+    cmp al,'E'
+    
+    jz EnteredE  
+    
+     jnz ErrorPressF
+                             
+     
+        
+EnteredC:
+
+    jmp main
+    
+                                                     
+EnteredE:
+                   
+    mov dx, OFFSET final_message
+           
+    mov ah,09h                                  
+    
+    int 21h                              
+ 
+    mov ah,04ch  
+                    
+    int 21h 
+
+ErrorPressF:
+
+    mov dx,OFFSET Auxiliary_String          
+
+    mov ah,09h                                 
+
+    int 21h  
+    
+    call next   
+
+next ENDP  
 
 DEFINE_SCAN_NUM  
 
