@@ -1,18 +1,18 @@
-include 'emu8086.inc'
-
 .MODEL small
 
 .STACK 4096
 
 .DATA
 
-    message DB 'A', 0  
+    message DB 'ABC', 0  
     
     crc_l DB 0FFh 
     
     crc_h DB 0FFh  
     
-    polynomial DW 0A001h  
+    polynomial DW 0A001h 
+    
+    exit_notification   DW 13, 10, 10, 10, 10, 'CRC16 =  $' 
     
 .CODE
 
@@ -30,7 +30,7 @@ next_byte:
     
     cmp al, 0 
     
-    je empty_done
+    je done
 
     xor al, crc_l  
     
@@ -67,31 +67,69 @@ store_crc:
     jmp next_byte
 
 done:
-    
-    mov al, crc_l
-    
-    mov ah, crc_h
-    
-    call print_num
-    
-    ret 
 
-    mov ah, 04Ch 
+    mov    dx, exit_notification                    
+
+    mov    ah,09h                                       
+
+    int       21h 
+    
+    mov al, crc_h   
+    
+    call print_hex_byte
+
+    mov al, crc_l 
+    
+    call print_hex_byte
+
+    mov ah, 4Ch 
     
     int 21h
-    
-empty_done:
 
-    mov ah, 04Ch 
+print_hex_byte:  
+
+    push ax 
     
-    int 21h
+    push bx
+
+    mov bl, al  
+          
+    shr al, 4  
+           
+    call print_hex_digit
+
+    mov al, bl  
+    
+    and al, 0Fh      
+    
+    call print_hex_digit
+
+    pop bx 
+    
+    pop ax 
+    
+    ret
+
+print_hex_digit: 
+
+    cmp al, 9 
+    
+    jbe print_num 
+    
+    add al, 7  
+          
+print_num:  
+
+    add al, '0' 
+    
+    mov dl, al  
+                 
+    mov ah, 02h  
+    
+    int 21h 
+    
+    ret
     
 main ENDP
-
-DEFINE_SCAN_NUM
-DEFINE_PRINT_STRING
-DEFINE_PRINT_NUM
-DEFINE_PRINT_NUM_UNS  ; required for print_num.
-DEFINE_PTHIS
 
 END main
