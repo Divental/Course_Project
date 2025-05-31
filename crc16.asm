@@ -6,7 +6,9 @@ include 'emu8086.inc'
 
 .DATA
 
-    message DB 100 DUP(0)
+    message DB 10 DUP(0)   
+    
+    ;message DB "A", 0
     
     crc_l DB 0FFh 
     
@@ -14,13 +16,13 @@ include 'emu8086.inc'
     
     polynomial DW 0A001h 
     
-    exit_notification   DW 13, 'CRC16 =  $' 
+    exit_notification DB 13, 10, 'CRC16 = $' 
     
     message_2 DB 13, 10, "Enter your text to calculate CRC16: $"  
     
     final_message DB 13, 10, 10, "The program has ended correctly $", 13, 10 
    
-    message_3 DB 13, 10, 10, "Continue -> R, exit -> E: $"   
+    message_3 DB 13, 10, "Continue -> R, exit -> E: $"   
     
     Auxiliary_String DB 13, 10, 'Wrong character! Please try again!', 13, 10, '$' 
     
@@ -32,7 +34,11 @@ main PROC
     
     mov ax, @data 
     
-    mov ds, ax  
+    mov ds, ax 
+    
+    mov crc_l, 0FFh          
+    
+    mov crc_h, 0FFh 
     
     mov dx,OFFSET  message_2           
     
@@ -116,7 +122,7 @@ store_crc:
 
 done:
 
-    mov dx, exit_notification                    
+    mov dx, OFFSET exit_notification                    
 
     mov ah,09h                                       
 
@@ -178,6 +184,8 @@ outer_print_num:
     ret
     
 next PROC 
+    
+    call clear_away
 
     mov dx,OFFSET message_3         
     
@@ -197,11 +205,13 @@ next PROC
     
     jz EnteredE  
     
-     jnz ErrorPressF
+    jnz ErrorPressF
                              
      
         
 EnteredC:
+
+    call clear_away
 
     jmp main
     
@@ -228,7 +238,25 @@ ErrorPressF:
     
     call next   
 
-next ENDP  
+next ENDP
+
+clear_away PROC
+
+    mov cx, 10         
+    
+    lea di, message   
+
+clear_loop:      
+    
+    mov byte ptr [di], 0  
+    
+    inc di  
+    
+    loop clear_loop  
+    
+    ret
+
+clear_away ENDP
 
 DEFINE_SCAN_NUM  
 
